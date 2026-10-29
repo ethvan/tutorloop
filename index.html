@@ -63,6 +63,7 @@ body{background:radial-gradient(900px 300px at 50% -80px,var(--soft),transparent
 #tabs .tab{border:0;background:transparent;flex:1;border-radius:12px;font-size:12px;padding:8px 4px}
 #tabs .tab.on{background:var(--soft);color:var(--accent);font-weight:700}
 .wrap{padding-bottom:90px}.hero{padding:14px}.stat{min-width:62px}}
+.skill{grid-template-columns:120px 1fr 90px}.sk{border-top:1px solid var(--line);padding:8px 0}.sk:first-of-type{border-top:0}.skill2{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;margin:4px 0}.sk input[type=text]{font-size:13px}.ic{border:1px solid var(--line);background:var(--card);border-radius:8px;width:38px;cursor:pointer;flex:none}
 </style>
 </head>
 <body>
@@ -73,82 +74,86 @@ body{background:radial-gradient(900px 300px at 50% -80px,var(--soft),transparent
 </header>
 <div class="chips" id="chips" style="margin-bottom:12px"></div>
 <div id="app"></div>
-<p class="mute" style="text-align:center;margin-top:20px">Prototype with sample data. Changes live only while this page is open.</p>
+<p class="mute" style="text-align:center;margin-top:20px">Prototype with sample data, saved on this device only.</p>
 </div>
 <script>
-var SK=[["grammar","Grammar"],["vocab","Vocabulary"],["reading","Reading"],["writing","Writing"],["listening","Listening"],["speaking","Speaking"]];
-var LV=["","Beginner","Developing","Intermediate","Confident","Advanced"];
-var ACT={grammar:"Write five sentences using this week’s tense, then check them with your tutor.",vocab:"Make flashcards for 10 new words and use each one in a sentence.",reading:"Read a short article you enjoy and write a two-line summary.",writing:"Write a short paragraph about your weekend and underline your best sentence.",listening:"Watch a 3-minute video with subtitles off, then explain what happened.",speaking:"Record yourself talking for one minute about your day and listen back."};
+var LV=["","Exploring","Growing","Getting there","Strong","Shining"];
+var SC=["#1d9a85","#f2a33a","#6c5ce7","#e8567a","#2e9be6","#43b36b","#e07b39","#8e6bd1"];
 var S={view:"tutor",sel:0,draft:{},students:[
-{name:"Mia (pseudonym)",level:"Intermediate",skills:{grammar:3,vocab:4,reading:4,writing:2,listening:3,speaking:3},prev:{grammar:3,vocab:3,reading:4,writing:2,listening:3,speaking:2},approved:true,
- goals:[{t:"Use past tenses correctly in writing",d:false},{t:"Learn 40 STEM vocabulary words",d:true},{t:"Give a 2-minute talk on a science topic",d:false}],
- lessons:[{date:"Oct 21",covered:"Past simple vs. present perfect; lab report vocabulary",well:"Great use of new vocabulary in speaking",practice:"Mixing up past tenses in writing",hw:true,priv:"Gets frustrated when corrected in front of her brother.",shared:true},
- {date:"Oct 14",covered:"Reading a short physics article",well:"Strong at finding main ideas",practice:"Paragraph structure",hw:false,priv:"Parent asked about test prep.",shared:true}]},
-{name:"Leo (pseudonym)",level:"Developing",skills:{grammar:2,vocab:3,reading:3,writing:2,listening:2,speaking:2},prev:{grammar:2,vocab:3,reading:3,writing:2,listening:2,speaking:2},approved:false,
- goals:[{t:"Describe a science experiment in 5 sentences",d:false}],
- lessons:[{date:"Oct 22",covered:"Sequence words: first, next, finally",well:"Confident reading aloud",practice:"Question forms",hw:true,priv:"Needs breaks every 20 min.",shared:true}]}
+{name:"Mia (pseudonym)",subject:"Algebra",approved:true,
+ skills:[{n:"Solving equations",v:4,p:3,f:false,tip:""},{n:"Word problems",v:2,p:2,f:true,tip:"Underline the question, then draw a quick picture."},{n:"Showing steps",v:3,p:2,f:true,tip:"Write one line per step, like a recipe."},{n:"Reading graphs",v:4,p:4,f:false,tip:""}],
+ lessons:[{date:"Oct 21",covered:"Two-step equations and checking answers",well:"Checked her own work without being asked",practice:"Turning word problems into equations",hw:true,priv:"Gets frustrated when corrected in front of her brother.",shared:true},
+ {date:"Oct 14",covered:"Slope and reading line graphs",well:"Quick at spotting patterns",practice:"Writing out each step",hw:false,priv:"Parent asked about test prep.",shared:true}]},
+{name:"Leo (pseudonym)",subject:"Chemistry",approved:false,
+ skills:[{n:"Lab safety",v:4,p:4,f:false,tip:""},{n:"Balancing equations",v:2,p:2,f:true,tip:"Count atoms on each side with a tally chart."},{n:"Explaining ideas",v:3,p:2,f:false,tip:""}],
+ lessons:[{date:"Oct 22",covered:"Atoms, molecules and simple reactions",well:"Great questions during the demo",practice:"Balancing equations",hw:true,priv:"Needs breaks every 20 min.",shared:true}]}
 ]};
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function cur(){return S.students[S.sel]}
+function save(){try{localStorage.setItem("tutorloop2",JSON.stringify(S.students))}catch(e){}}
 function saveDraft(){var f=document.getElementById("lf");if(!f)return;S.draft={covered:f.covered.value,well:f.well.value,practice:f.practice.value,priv:f.priv.value,hw:f.hw.checked,shared:f.shared.checked}}
 function go(v){saveDraft();S.view=v;render()}
 function pick(i){saveDraft();S.sel=i;render()}
-function toggleGoal(i){saveDraft();cur().goals[i].d=!cur().goals[i].d;render()}
-function addGoal(){saveDraft();var el=document.getElementById("ng");if(el.value.trim()){cur().goals.push({t:el.value.trim(),d:false});render()}}
-function setSkill(k,v){cur().skills[k]=+v;var l=document.getElementById("v_"+k);if(l)l.textContent=LV[v]}
+function setSkill(i,v){cur().skills[i].v=+v;var l=document.getElementById("v_"+i);if(l)l.textContent=LV[v];save()}
+function rename(i,v){if(v.trim()){cur().skills[i].n=v.trim();save()}}
+function setTip(i,v){cur().skills[i].tip=v;save()}
+function setSubject(v){cur().subject=v;save()}
+function toggleFocus(i){saveDraft();cur().skills[i].f=!cur().skills[i].f;render()}
+function delSkill(i){saveDraft();cur().skills.splice(i,1);render()}
+function addSkill(){saveDraft();var el=document.getElementById("ns");if(el.value.trim()){cur().skills.push({n:el.value.trim(),v:2,p:2,f:false,tip:""});render()}}
+function snapshot(){saveDraft();cur().skills.forEach(function(k){k.p=k.v});render()}
 function approve(){saveDraft();cur().approved=!cur().approved;render()}
 function addLesson(e){e.preventDefault();var f=e.target;if(!f.covered.value.trim())return;
  cur().lessons.unshift({date:"Today",covered:f.covered.value,well:f.well.value,practice:f.practice.value,hw:f.hw.checked,priv:f.priv.value,shared:f.shared.checked});S.draft={};render()}
-function ranked(s){return SK.slice().sort(function(a,b){return s.skills[b[0]]-s.skills[a[0]]})}
-var SC=["#1d9a85","#f2a33a","#6c5ce7","#e8567a","#2e9be6","#43b36b"];
-function radar(s){var n=6,cx=150,cy=150,R=90,g="";var pts=function(f){return SK.map(function(k,i){var a=-Math.PI/2+i*2*Math.PI/n,v=f(k[0])/5*R;return[cx+v*Math.cos(a),cy+v*Math.sin(a)]})};var j=function(a){return a.map(function(p){return p.join(",")}).join(" ")};
- for(var l=1;l<=5;l++){g+='<polygon points="'+j(pts(function(){return l}))+'" fill="none" stroke="var(--line)"/>'}
- var lab=SK.map(function(k,i){var a=-Math.PI/2+i*2*Math.PI/n;return '<text x="'+(cx+(R+26)*Math.cos(a))+'" y="'+(cy+(R+26)*Math.sin(a)+4)+'" text-anchor="middle" font-size="12" fill="var(--mute)">'+k[1]+'</text>'}).join("");
- return '<svg class="chart" viewBox="0 0 300 300">'+g+'<polygon points="'+j(pts(function(k){return s.prev[k]}))+'" fill="none" stroke="#f2a33a" stroke-width="2" stroke-dasharray="4 3"/><polygon points="'+j(pts(function(k){return s.skills[k]}))+'" fill="#1d9a85" fill-opacity=".28" stroke="#1d9a85" stroke-width="2.5"/>'+pts(function(k){return s.skills[k]}).map(function(p,i){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4.5" fill="'+SC[i]+'"/>'}).join("")+lab+'</svg><div class="legend"><span><i style="background:#1d9a85"></i>Now</span><span><i style="background:#f2a33a"></i>Last month</span></div>'}
-function bars(s){return SK.map(function(k,i){return '<div class="skill"><span>'+k[1]+'</span><div class="bar"><i style="width:'+s.skills[k[0]]*20+'%;background:'+SC[i]+'"></i></div><span class="mute">'+LV[s.skills[k[0]]]+'</span></div>'}).join("")}
+function radar(s){var K=s.skills,n=K.length;if(n<3)return bars(s);var cx=150,cy=150,R=85;
+ var pt=function(i,v){var a=-Math.PI/2+i*2*Math.PI/n,r=v/5*R;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
+ var poly=function(f){return K.map(function(k,i){return pt(i,f(k)).join(",")}).join(" ")};
+ var g="";for(var l=1;l<=5;l++)g+='<polygon points="'+poly(function(){return l})+'" fill="none" stroke="var(--line)"/>';
+ var lab=K.map(function(k,i){var a=-Math.PI/2+i*2*Math.PI/n,c=Math.cos(a),t=k.n.length>16?k.n.slice(0,15)+"…":k.n;return '<text x="'+(cx+(R+12)*c)+'" y="'+(cy+(R+14)*Math.sin(a)+4)+'" text-anchor="'+(c>0.3?"start":c<-0.3?"end":"middle")+'" font-size="11" fill="var(--mute)">'+esc(t)+'</text>'}).join("");
+ var dots=K.map(function(k,i){var p=pt(i,k.v);return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4.5" fill="'+SC[i%SC.length]+'"/>'}).join("");
+ return '<svg class="chart" viewBox="-60 -5 420 310">'+g+'<polygon points="'+poly(function(k){return k.p})+'" fill="none" stroke="#f2a33a" stroke-width="2" stroke-dasharray="4 3"/><polygon points="'+poly(function(k){return k.v})+'" fill="#1d9a85" fill-opacity=".28" stroke="#1d9a85" stroke-width="2.5"/>'+dots+lab+'</svg><div class="legend"><span><i style="background:#1d9a85"></i>Now</span><span><i style="background:#f2a33a"></i>Where we started</span></div>'}
+function bars(s){return s.skills.map(function(k,i){return '<div class="skill"><span>'+esc(k.n)+'</span><div class="bar"><i style="width:'+k.v*20+'%;background:'+SC[i%SC.length]+'"></i></div><span class="mute">'+LV[k.v]+'</span></div>'}).join("")}
 function ring(p){var c=2*Math.PI*26;return '<svg width="56" height="56" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="8"/><circle cx="32" cy="32" r="26" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+(c*p)+' '+c+'" transform="rotate(-90 32 32)"/><text x="32" y="37" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">'+Math.round(p*100)+'%</text></svg>'}
-function hero(s,sub){var avg=(SK.reduce(function(a,k){return a+s.skills[k[0]]},0)/6).toFixed(1),hw=s.lessons.filter(function(l){return l.hw}).length,gd=s.goals.filter(function(g){return g.d}).length,p=s.goals.length?gd/s.goals.length:0;
- return '<div class="hero"><div><h2>'+esc(s.name)+'</h2><p>'+sub+'</p></div><div class="stats"><div class="stat"><b>'+avg+'</b><span>Avg level</span></div><div class="stat"><b>'+hw+'/'+s.lessons.length+'</b><span>Homework</span></div><div class="stat">'+ring(p)+'<span>Goals</span></div></div></div>'}
+function hero(s,sub){var n=s.lessons.length,hw=s.lessons.filter(function(l){return l.hw}).length,grew=s.skills.filter(function(k){return k.v>k.p}).length;
+ return '<div class="hero"><div><h2>'+esc(s.name)+'</h2><p>'+sub+'</p></div><div class="stats"><div class="stat"><b>'+grew+' 🌱</b><span>Skills grew</span></div><div class="stat"><b>'+n+'</b><span>Lessons</span></div><div class="stat">'+ring(n?hw/n:0)+'<span>Homework</span></div></div></div>'}
 function tutorView(s){var d=S.draft;
- var sk=SK.map(function(k){return '<div class="skill"><span>'+k[1]+'</span><input type="range" min="1" max="5" value="'+s.skills[k[0]]+'" oninput="setSkill(\''+k[0]+'\',this.value)"><span class="mute" id="v_'+k[0]+'">'+LV[s.skills[k[0]]]+'</span></div>'}).join("");
- var gl=s.goals.map(function(g,i){return '<div class="goal"><input type="checkbox" '+(g.d?"checked":"")+' onchange="toggleGoal('+i+')"><span>'+esc(g.t)+'</span></div>'}).join("");
- var hist=s.lessons.map(function(l){return '<div class="lesson"><b>'+esc(l.date)+'</b> · '+esc(l.covered)+'<br><span class="mute">Went well: '+esc(l.well||"—")+' · Practice: '+esc(l.practice||"—")+'</span><br>'+(l.hw?'<span class="tag">Homework done</span>':'<span class="tag warn">Homework not done</span>')+(l.shared?'<span class="tag">Shared</span>':'<span class="tag warn">Not shared</span>')+(l.priv?'<br><span class="tag lock">🔒 Private</span> <span class="mute">'+esc(l.priv)+'</span>':"")+'</div>'}).join("");
- return hero(s,'Level: '+esc(s.level))+'<div class="grid"><div>'+
- '<div class="card"><h2>Skill map</h2>'+radar(s)+'</div><div class="card"><h2>Assess skills</h2>'+sk+'<h3>Learning goals</h3>'+gl+'<div class="row" style="margin-top:8px"><input type="text" id="ng" placeholder="Add a goal"><button class="btn ghost" style="margin:0" onclick="addGoal()">Add</button></div></div>'+
+ var sk=s.skills.map(function(k,i){return '<div class="sk"><div class="row"><input type="text" value="'+esc(k.n)+'" onchange="rename('+i+',this.value)"><button class="ic" title="Focus for next lessons" onclick="toggleFocus('+i+')">'+(k.f?"🎯":"○")+'</button><button class="ic" title="Remove skill" onclick="delSkill('+i+')">✕</button></div><div class="skill2"><input type="range" min="1" max="5" value="'+k.v+'" oninput="setSkill('+i+',this.value)"><span class="mute" id="v_'+i+'">'+LV[k.v]+'</span></div><input type="text" placeholder="Tip or activity for the student (optional)" value="'+esc(k.tip)+'" onchange="setTip('+i+',this.value)"></div>'}).join("");
+ var hist=s.lessons.map(function(l){return '<div class="lesson"><b>'+esc(l.date)+'</b> · '+esc(l.covered)+'<br><span class="mute">Went well: '+esc(l.well||"—")+' · Next time: '+esc(l.practice||"—")+'</span><br>'+(l.hw?'<span class="tag">Homework done</span>':'<span class="tag warn">Homework not done</span>')+(l.shared?'<span class="tag">Shared</span>':'<span class="tag warn">Not shared</span>')+(l.priv?'<br><span class="tag lock">🔒 Private</span> <span class="mute">'+esc(l.priv)+'</span>':"")+'</div>'}).join("");
+ return hero(s,esc(s.subject))+'<div class="grid"><div>'+
+ '<div class="card"><h2>Skill map</h2>'+(s.skills.length?radar(s):'<p class="mute">Add a skill to see the map.</p>')+'</div>'+
+ '<div class="card"><h2>Skills you’re tracking</h2><label>Subject or focus</label><input type="text" value="'+esc(s.subject)+'" onchange="setSubject(this.value)"><p class="mute">Name any skill. 🎯 marks what to focus on next.</p>'+sk+'<div class="row" style="margin-top:8px"><input type="text" id="ns" placeholder="Add a skill, e.g. Lab reports"><button class="btn ghost" style="margin:0" onclick="addSkill()">Add</button></div><button class="btn ghost" onclick="snapshot()">Start a new month</button><p class="mute">“Start a new month” resets the starting point so growth shows from today.</p></div>'+
  '<div class="card"><h2>Parent report</h2><p class="mute">Parents only see the report after you approve it.</p><span class="tag '+(s.approved?"":"warn")+'">'+(s.approved?"Approved and shared":"Draft, not shared")+'</span><br><button class="btn" onclick="approve()">'+(s.approved?"Withdraw approval":"Approve for sharing")+'</button></div></div><div>'+
  '<div class="card"><h2>Record a lesson (about 2 minutes)</h2><form id="lf" onsubmit="addLesson(event)">'+
  '<label>What was covered</label><textarea name="covered">'+esc(d.covered||"")+'</textarea>'+
  '<label>What went well</label><textarea name="well">'+esc(d.well||"")+'</textarea>'+
- '<label>What needs more practice</label><textarea name="practice">'+esc(d.practice||"")+'</textarea>'+
+ '<label>What to work on next</label><textarea name="practice">'+esc(d.practice||"")+'</textarea>'+
  '<label>🔒 Private tutor note (never shared)</label><textarea name="priv">'+esc(d.priv||"")+'</textarea>'+
  '<label><input type="checkbox" name="hw" '+(d.hw?"checked":"")+'> Homework completed</label>'+
  '<label><input type="checkbox" name="shared" '+(d.shared!==false?"checked":"")+'> Include in student and parent views</label>'+
  '<button class="btn" type="submit">Save lesson</button></form></div>'+
  '<div class="card"><h2>Student history</h2>'+hist+'</div></div></div>'}
-function studentView(s){var r=ranked(s),str=r.slice(0,2),need=r.slice(-2).reverse();var done=s.goals.filter(function(g){return g.d}),todo=s.goals.filter(function(g){return !g.d});
- return hero(s,'Keep going, you’re doing great!')+'<div class="card"><h2>Your skill map</h2>'+radar(s)+bars(s)+'</div><div class="card"><h2>Hi '+esc(s.name.split(" ")[0])+'! Here’s how you’re doing</h2>'+
- '<h3>Your strengths</h3>'+str.map(function(k){return '<span class="tag">⭐ '+k[1]+' ('+LV[s.skills[k[0]]]+')</span>'}).join("")+
- '<h3>Let’s practice these</h3>'+need.map(function(k){return '<span class="tag warn">'+k[1]+'</span>'}).join("")+
- '<h3>Goals you’ve reached</h3>'+(done.length?'<ul>'+done.map(function(g){return '<li>✅ '+esc(g.t)+'</li>'}).join("")+'</ul>':'<p class="mute">Your first goal is coming soon!</p>')+
- '<h3>Still working on</h3><ul>'+todo.map(function(g){return '<li>'+esc(g.t)+'</li>'}).join("")+'</ul></div>'+
- '<div class="card"><h2>Try this week</h2><ul>'+need.map(function(k){return '<li><b>'+k[1]+':</b> '+ACT[k[0]]+'</li>'}).join("")+'</ul></div>'}
+function nextList(s){var f=s.skills.filter(function(k){return k.f});return f.length?'<ul>'+f.map(function(k){return '<li><b>'+esc(k.n)+':</b> '+(k.tip?esc(k.tip):'we’ll keep building this together')+'</li>'}).join("")+'</ul>':'<p class="mute">Your tutor will add next steps soon.</p>'}
+function studentView(s){var str=s.skills.filter(function(k){return k.v>=4}),grew=s.skills.filter(function(k){return k.v>k.p});
+ return hero(s,'Keep going, you’re doing great!')+'<div class="card"><h2>Your skill map</h2>'+(s.skills.length?radar(s):"")+'</div><div class="card"><h2>Hi '+esc(s.name.split(" ")[0])+'! Here’s how you’re growing</h2>'+
+ '<h3>Your strengths</h3>'+(str.length?str.map(function(k){return '<span class="tag">⭐ '+esc(k.n)+'</span>'}).join(""):'<p class="mute">You’re building lots of skills!</p>')+
+ '<h3>Where you’ve grown</h3>'+(grew.length?grew.map(function(k){return '<span class="tag">🌱 '+esc(k.n)+'</span>'}).join(""):'<p class="mute">Keep going, growth is on the way.</p>')+
+ '<h3>What we’re building next</h3>'+nextList(s)+'</div>'}
 function parentView(s){
  if(!s.approved)return '<div class="banner">Parent view</div><div class="card"><h2>Report not ready yet</h2><p class="mute">The tutor is still reviewing this report. Check back soon.</p></div>';
- var up=SK.filter(function(k){return s.skills[k[0]]>s.prev[k[0]]}),r=ranked(s),need=r.slice(-2).reverse();
- var recent=s.lessons.filter(function(l){return l.shared}).slice(0,3);var hw=recent.filter(function(l){return l.hw}).length;
- var sum=esc(s.name.split(" ")[0])+' is working at the <b>'+esc(s.level)+'</b> level. '+(up.length?'Recent progress in '+up.map(function(k){return k[1].toLowerCase()}).join(" and ")+'. ':'Skills are steady this month. ')+'Homework was completed in '+hw+' of the last '+recent.length+' lessons.';
- return '<div class="banner">🔐 Secure, read-only page. Tutor-approved summary.</div>'+hero(s,'Tutor-approved report')+'<div class="card"><h2>Skill progress</h2>'+radar(s)+'</div><div class="card"><h2>Progress summary</h2><p>'+sum+'</p>'+
- '<h3>Recent improvements</h3>'+(up.length?up.map(function(k){return '<span class="tag">📈 '+k[1]+': '+LV[s.prev[k[0]]]+' → '+LV[s.skills[k[0]]]+'</span>'}).join(""):'<p class="mute">No level changes yet.</p>')+
- '<h3>Areas to improve</h3>'+need.map(function(k){return '<span class="tag warn">'+k[1]+'</span>'}).join("")+
- '<h3>Goals for the next few weeks</h3><ul>'+s.goals.filter(function(g){return !g.d}).map(function(g){return '<li>'+esc(g.t)+'</li>'}).join("")+'</ul>'+
+ var grew=s.skills.filter(function(k){return k.v>k.p}),str=s.skills.filter(function(k){return k.v>=4}),recent=s.lessons.filter(function(l){return l.shared}).slice(0,3),hw=recent.filter(function(l){return l.hw}).length;
+ var sum=esc(s.name.split(" ")[0])+' is working on <b>'+esc(s.subject)+'</b>. '+(grew.length?'Recent growth in '+grew.map(function(k){return esc(k.n.toLowerCase())}).join(" and ")+'. ':'Skills are holding steady. ')+'Homework was completed in '+hw+' of the last '+recent.length+' lessons.';
+ return '<div class="banner">🔐 Secure, read-only page. Tutor-approved summary.</div>'+hero(s,'Tutor-approved report')+'<div class="card"><h2>Skill progress</h2>'+(s.skills.length?radar(s):"")+'</div><div class="card"><h2>Progress summary</h2><p>'+sum+'</p>'+
+ '<h3>Strengths</h3>'+(str.length?str.map(function(k){return '<span class="tag">⭐ '+esc(k.n)+'</span>'}).join(""):'<p class="mute">Building a solid foundation.</p>')+
+ '<h3>Recent growth</h3>'+(grew.length?grew.map(function(k){return '<span class="tag">🌱 '+esc(k.n)+': '+LV[k.p]+' → '+LV[k.v]+'</span>'}).join(""):'<p class="mute">No changes yet this month.</p>')+
+ '<h3>Focus for the next few weeks</h3>'+nextList(s)+
  '<h3>Recent lessons</h3>'+recent.map(function(l){return '<div class="lesson"><b>'+esc(l.date)+'</b> · '+esc(l.covered)+'<br><span class="mute">Went well: '+esc(l.well||"—")+'</span></div>'}).join("")+'</div>'}
 function render(){
  var T=[["tutor","📋 Tutor"],["student","🎓 Student"],["parent","👪 Parent"]];
  document.getElementById("tabs").innerHTML=T.map(function(t){return '<button class="tab '+(S.view===t[0]?"on":"")+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join("");
  document.getElementById("chips").innerHTML=S.students.map(function(s,i){return '<button class="chip '+(i===S.sel?"on":"")+'" onclick="pick('+i+')">'+esc(s.name.split(" ")[0])+'</button>'}).join("");
  var s=cur();document.getElementById("app").innerHTML=S.view==="tutor"?tutorView(s):S.view==="student"?studentView(s):parentView(s)}
-try{var sv=localStorage.getItem("tutorloop");if(sv)S.students=JSON.parse(sv)}catch(e){}
-var _r=render;render=function(){_r();try{localStorage.setItem("tutorloop",JSON.stringify(S.students))}catch(e){}};
+try{var sv=localStorage.getItem("tutorloop2");if(sv)S.students=JSON.parse(sv)}catch(e){}
+var _r=render;render=function(){_r();save()};
 render();
 if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0){navigator.serviceWorker.register("sw.js").catch(function(){})}
 </script>
