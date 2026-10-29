@@ -64,6 +64,7 @@ body{background:radial-gradient(900px 300px at 50% -80px,var(--soft),transparent
 #tabs .tab.on{background:var(--soft);color:var(--accent);font-weight:700}
 .wrap{padding-bottom:90px}.hero{padding:14px}.stat{min-width:62px}}
 .skill{grid-template-columns:120px 1fr 90px}.sk{border-top:1px solid var(--line);padding:8px 0}.sk:first-of-type{border-top:0}.skill2{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;margin:4px 0}.sk input[type=text]{font-size:13px}.ic{border:1px solid var(--line);background:var(--card);border-radius:8px;width:38px;cursor:pointer;flex:none}
+input[type=password]{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
 </style>
 </head>
 <body>
@@ -76,6 +77,8 @@ body{background:radial-gradient(900px 300px at 50% -80px,var(--soft),transparent
 <div id="app"></div>
 <p class="mute" style="text-align:center;margin-top:20px">Prototype with sample data, saved on this device only.</p>
 </div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
 <script>
 var LV=["","Exploring","Growing","Getting there","Strong","Shining"];
 var SC=["#1d9a85","#f2a33a","#6c5ce7","#e8567a","#2e9be6","#43b36b","#e07b39","#8e6bd1"];
@@ -90,7 +93,7 @@ var S={view:"tutor",sel:0,draft:{},students:[
 ]};
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function cur(){return S.students[S.sel]}
-function save(){try{localStorage.setItem("tutorloop2",JSON.stringify(S.students))}catch(e){}}
+function save(){if(CLOUD){cloudSave()}else{try{localStorage.setItem("tutorloop2",JSON.stringify(S.students))}catch(e){}}}
 function saveDraft(){var f=document.getElementById("lf");if(!f)return;S.draft={covered:f.covered.value,well:f.well.value,practice:f.practice.value,priv:f.priv.value,hw:f.hw.checked,shared:f.shared.checked}}
 function go(v){saveDraft();S.view=v;render()}
 function pick(i){saveDraft();S.sel=i;render()}
@@ -104,7 +107,7 @@ function addSkill(){saveDraft();var el=document.getElementById("ns");if(el.value
 function snapshot(){saveDraft();cur().skills.forEach(function(k){k.p=k.v});render()}
 function approve(){saveDraft();cur().approved=!cur().approved;render()}
 function addLesson(e){e.preventDefault();var f=e.target;if(!f.covered.value.trim())return;
- cur().lessons.unshift({date:"Today",covered:f.covered.value,well:f.well.value,practice:f.practice.value,hw:f.hw.checked,priv:f.priv.value,shared:f.shared.checked});S.draft={};render()}
+ cur().lessons.unshift({id:uid(),date:"Today",covered:f.covered.value,well:f.well.value,practice:f.practice.value,hw:f.hw.checked,priv:f.priv.value,shared:f.shared.checked});S.draft={};render()}
 function radar(s){var K=s.skills,n=K.length;if(n<3)return bars(s);var cx=150,cy=150,R=85;
  var pt=function(i,v){var a=-Math.PI/2+i*2*Math.PI/n,r=v/5*R;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
  var poly=function(f){return K.map(function(k,i){return pt(i,f(k)).join(",")}).join(" ")};
@@ -122,7 +125,7 @@ function tutorView(s){var d=S.draft;
  return hero(s,esc(s.subject))+'<div class="grid"><div>'+
  '<div class="card"><h2>Skill map</h2>'+(s.skills.length?radar(s):'<p class="mute">Add a skill to see the map.</p>')+'</div>'+
  '<div class="card"><h2>Skills you’re tracking</h2><label>Subject or focus</label><input type="text" value="'+esc(s.subject)+'" onchange="setSubject(this.value)"><p class="mute">Name any skill. 🎯 marks what to focus on next.</p>'+sk+'<div class="row" style="margin-top:8px"><input type="text" id="ns" placeholder="Add a skill, e.g. Lab reports"><button class="btn ghost" style="margin:0" onclick="addSkill()">Add</button></div><button class="btn ghost" onclick="snapshot()">Start a new month</button><p class="mute">“Start a new month” resets the starting point so growth shows from today.</p></div>'+
- '<div class="card"><h2>Parent report</h2><p class="mute">Parents only see the report after you approve it.</p><span class="tag '+(s.approved?"":"warn")+'">'+(s.approved?"Approved and shared":"Draft, not shared")+'</span><br><button class="btn" onclick="approve()">'+(s.approved?"Withdraw approval":"Approve for sharing")+'</button></div></div><div>'+
+ '<div class="card"><h2>Parent report</h2><p class="mute">Parents only see the report after you approve it.</p><span class="tag '+(s.approved?"":"warn")+'">'+(s.approved?"Approved and shared":"Draft, not shared")+'</span><br><button class="btn" onclick="approve()">'+(s.approved?"Withdraw approval":"Approve for sharing")+'</button>'+(CLOUD?' <button class="btn ghost" onclick="share(\'parent\')">Copy parent link</button> <button class="btn ghost" onclick="share(\'student\')">Copy student link</button>':'')+'</div></div><div>'+
  '<div class="card"><h2>Record a lesson (about 2 minutes)</h2><form id="lf" onsubmit="addLesson(event)">'+
  '<label>What was covered</label><textarea name="covered">'+esc(d.covered||"")+'</textarea>'+
  '<label>What went well</label><textarea name="well">'+esc(d.well||"")+'</textarea>'+
@@ -150,11 +153,45 @@ function parentView(s){
 function render(){
  var T=[["tutor","📋 Tutor"],["student","🎓 Student"],["parent","👪 Parent"]];
  document.getElementById("tabs").innerHTML=T.map(function(t){return '<button class="tab '+(S.view===t[0]?"on":"")+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join("");
- document.getElementById("chips").innerHTML=S.students.map(function(s,i){return '<button class="chip '+(i===S.sel?"on":"")+'" onclick="pick('+i+')">'+esc(s.name.split(" ")[0])+'</button>'}).join("");
- var s=cur();document.getElementById("app").innerHTML=S.view==="tutor"?tutorView(s):S.view==="student"?studentView(s):parentView(s)}
-try{var sv=localStorage.getItem("tutorloop2");if(sv)S.students=JSON.parse(sv)}catch(e){}
+ document.getElementById("chips").innerHTML=S.students.map(function(s,i){return '<button class="chip '+(i===S.sel?"on":"")+'" onclick="pick('+i+')">'+esc(s.name.split(" ")[0])+'</button>'}).join("")+(CLOUD?'<button class="chip" onclick="addStudent()">+ Student</button><button class="chip" onclick="signOut()">Sign out</button>':"");
+ var s=cur();if(!s){document.getElementById("app").innerHTML='<div class="card"><h2>Welcome</h2><p class="mute">Tap “+ Student” to add your first student.</p></div>';return}document.getElementById("app").innerHTML=S.view==="tutor"?tutorView(s):S.view==="student"?studentView(s):parentView(s)}
+var CLOUD=null,sb=null,me=null,cfg=window.TL_CONFIG||{},_t;
+function uid(){return crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()}
+async function pushAll(){for(var s of S.students){if(!s.id)s.id=uid();var notes={};
+ var pub=s.lessons.map(function(l){l.id=l.id||uid();notes[l.id]=l.priv||"";return{id:l.id,date:l.date,covered:l.covered,well:l.well,practice:l.practice,hw:l.hw,shared:l.shared}});
+ var a=await sb.from("students").upsert({id:s.id,tutor_id:me.id,name:s.name,subject:s.subject,approved:s.approved,skills:s.skills,lessons:pub});
+ var b=await sb.from("private_notes").upsert({student_id:s.id,tutor_id:me.id,notes:notes});
+ if(a.error||b.error)console.error(a.error||b.error)}}
+function cloudSave(){clearTimeout(_t);_t=setTimeout(pushAll,600)}
+async function loadAll(){var a=await sb.from("students").select("*").order("created_at"),b=await sb.from("private_notes").select("*"),nm={};
+ (b.data||[]).forEach(function(r){nm[r.student_id]=r.notes});
+ S.students=(a.data||[]).map(function(r){return{id:r.id,name:r.name,subject:r.subject,approved:r.approved,skills:r.skills,lessons:r.lessons.map(function(l){l.priv=(nm[r.id]||{})[l.id]||"";return l})}});S.sel=0;render()}
+function addStudent(){var n=prompt("Student name or pseudonym");if(!n)return;S.students.push({id:uid(),name:n,subject:"",approved:false,skills:[],lessons:[]});S.sel=S.students.length-1;render()}
+async function share(role){clearTimeout(_t);await pushAll();var t=Array.from(crypto.getRandomValues(new Uint8Array(24))).map(function(b){return b.toString(16).padStart(2,"0")}).join("");
+ var r=await sb.from("shares").insert({token:t,student_id:cur().id,role:role,expires_at:new Date(Date.now()+90*864e5).toISOString()});
+ if(r.error){alert(r.error.message);return}
+ var u=(cfg.siteUrl||location.origin+location.pathname)+"?r="+t;
+ try{await navigator.clipboard.writeText(u);alert("Link copied. It expires in 90 days.")}catch(e){prompt("Copy this link",u)}}
+function loginView(msg){document.getElementById("tabs").innerHTML="";document.getElementById("chips").innerHTML="";
+ document.getElementById("app").innerHTML='<div class="card" style="max-width:380px;margin:20px auto"><h2>Tutor sign in</h2><label>Email</label><input type="text" id="em" autocapitalize="none"><label>Password</label><input type="password" id="pw"><button class="btn" onclick="auth(false)">Sign in</button> <button class="btn ghost" onclick="auth(true)">Create account</button><p class="mute" id="am">'+(msg||"")+'</p></div>'}
+async function auth(up){var e=document.getElementById("em").value.trim(),p=document.getElementById("pw").value,am=document.getElementById("am");
+ var r=up?await sb.auth.signUp({email:e,password:p}):await sb.auth.signInWithPassword({email:e,password:p});
+ if(r.error){am.textContent=r.error.message;return}
+ if(!r.data.session){am.textContent="Check your email to confirm, then sign in.";return}
+ start(r.data.session)}
+async function start(sess){me=sess.user;CLOUD=true;await loadAll()}
+async function signOut(){await sb.auth.signOut();CLOUD=null;S.students=[];loginView()}
+async function boot(){var tok=new URLSearchParams(location.search).get("r");
+ if(cfg.url&&cfg.key&&window.supabase){sb=supabase.createClient(cfg.url,cfg.key);
+  if(tok){document.getElementById("tabs").innerHTML="";document.getElementById("chips").innerHTML="";
+   var r=await sb.rpc("get_shared",{p_token:tok}),el=document.getElementById("app");
+   if(r.error||!r.data){el.innerHTML='<div class="card"><h2>This link is no longer valid</h2><p class="mute">Please ask your tutor for a new one.</p></div>'}
+   else{S.students=[r.data];S.sel=0;el.innerHTML=(r.data.role==="parent"?parentView:studentView)(r.data)}return}
+  var g=await sb.auth.getSession();if(g.data.session){start(g.data.session)}else{loginView()}return}
+ try{var sv=localStorage.getItem("tutorloop2");if(sv)S.students=JSON.parse(sv)}catch(e){}
+ render()}
 var _r=render;render=function(){_r();save()};
-render();
+boot();
 if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0){navigator.serviceWorker.register("sw.js").catch(function(){})}
 </script>
 </body>
